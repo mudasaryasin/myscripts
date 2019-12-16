@@ -2,7 +2,7 @@
 ZHOME=/opt/zimbra
 ZBACKUP=/opt/zimbraback
 DATE=`date +"%d%m%g"`
-
+echo "abc"
 
 echo "==============================Start DB backup=============================="
 /opt/zimbra/mysql/bin/mysqldump --user=root --password= --socket=/opt/zimbra/db/mysql.sock --all-databases --single-transaction --flush-logs > /opt/zimbraback/db/fulldb$DATE.sql
