@@ -1,0 +1,112 @@
+[root@mydomian1dc1zimbra script]# cat backup_allaccounts.sh
+ZHOME=/opt/zimbra
+ZBACKUP=/opt/backup/mailbox
+ZCONFD=$ZHOME/conf
+DATE=`date +"%d%m%g"`
+ZDUMPDIR=$ZBACKUP/$DATE
+ZMBOX=/opt/zimbra/bin/zmmailbox
+
+if [ ! -d $ZDUMPDIR ]; then
+mkdir -p $ZDUMPDIR
+chown -R zimbra:zimbra $ZDUMPDIR
+fi
+
+echo "Backup start Running zmprov ... "
+
+for mailbox in `zmprov -l gaa`
+
+do
+echo " Generating files from backup $mailbox ..."
+       $ZMBOX -z -m $mailbox getRestURL "//?fmt=zip" > $ZDUMPDIR/$mailbox.zip
+	   #/opt/zimbra/bin/zmmailbox -z -m 
+done
+[root@mydomian1dc1zimbra script]# cat fullmailbocAll.sh
+#Mudasar Yasin
+echo "<     Backup of all email accounts              >"
+echo "======================================================="
+echo""
+#
+echo Start time = $(date +%T)
+#
+echo ""
+ZHOME=/opt/zimbra
+ZBACKUP=$ZHOME/backup/mailbox
+echo "Wait ...Generating backup files ..."
+su - zimbra -c "/opt/zimbra/script/backup_allaccounts.sh"
+#
+[root@mydomian1dc1zimbra script]#
+
+
+
+
+
+===============================================================================================================================================
+
+
+[root@mydomian1dc1zimbra script]# cat fullmailbocAll-size.sh
+#Mudasar Yasin
+echo "<     Backup of all email accounts              >"
+echo "======================================================="
+echo""
+#
+echo Start time = $(date +%T)
+#
+echo ""
+ZHOME=/opt/zimbra
+ZBACKUP=$ZHOME/backup/mailbox
+echo "Wait ...Generating Mailbox size ..."
+su - zimbra -c "/opt/zimbra/script/backup_allaccounts-size.sh"
+#
+[root@mydomian1dc1zimbra script]# cat "/opt/zimbra/script/backup_allaccounts-size.sh"
+ZHOME=/opt/zimbra
+ZBACKUP=/opt/backup/mailbox
+ZCONFD=$ZHOME/conf
+DATE=`date +"%d%m%g"`
+ZDUMPDIR=$ZBACKUP/$DATE
+ZMBOX=/opt/zimbra/bin/zmmailbox
+ZMPROV=/opt/zimbra/bin/zmprov
+
+if [ ! -d $ZDUMPDIR ]; then
+mkdir -p $ZDUMPDIR
+chown -R zimbra:zimbra $ZDUMPDIR
+fi
+
+for mailbox in `zmprov -l gaa`
+do
+#echo " Generating files from backup $mailbox ..."
+#       $ZMBOX -z -m $mailbox getRestURL "//?fmt=zip" > $ZDUMPDIR/$mailbox.zip
+        echo "Inbox size of $mailbox......."
+#       $ZMBOX -z -m $mailbox gms
+        quota=`$ZMPROV -l ga $mailbox | grep zimbraMailQuota| awk '{print $2}'` #get assigned quota
+        mboxsize=`$ZMBOX -z -m $mailbox gms` #Current Mail box Size
+
+        quota=$((($quota/1024)/1024)) # Convert Quota in MB
+        echo "Assigned Quota= $quota"
+        #if quota id 0 mean it has unlimited quota, assign 10MB
+        if [ $quota -eq 0 ]; then
+            quota=10
+        fi
+
+        i="$(echo $mboxsize | awk '{print $2}')" # KB or MB
+        used="$(echo $mboxsize | awk '{print $1}')"
+        per=`echo "(100 * $used)/$quota" | bc -l| cut -d"." -f1`
+        #per=`echo $per | cut -d"." -f1`
+        echo "% of Used $per"
+        if [[ "$i" == *"KB"* ]]; then
+              echo "Mail box is in KB ..... NOT DELETED"
+        elif [[ "$i" == *"MB"* ]]; then
+              echo "MB"
+              if [[ $per -gt 70 ]]; then
+                echo "Backup"
+                $ZMBOX -z -m $mailbox getRestURL "//?fmt=zip" > $ZDUMPDIR/$mailbox.zip
+                echo "Mail box is $mboxsize greater then 90% ......DELETED"
+                sleep 5
+                $ZMBOX -z -m $mailbox emptyFolder /Inbox
+               fi
+        fi
+done
+
+
+/opt/zimbra/bin/zmmailbox -z -m cabog@mydomian1global.local getRestURL "//?fmt=zip" > /tmp/cabog.zip
+
+/opt/zimbra/bin/zmmailbox -z -m ahmed.roofi8@mydomian1global.local getRestURL "//?fmt=zip" > /tmp/ahmed.roofi8.zip

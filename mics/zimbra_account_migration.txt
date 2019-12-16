@@ -1,0 +1,27 @@
+#!/bin/bash
+i=0
+y=0
+DATE=`/bin/date +%F`
+file="/opt/zimbra/script/accounts.txt"
+REPORT="/opt/zimbra/script/account-change-$DATE.txt"
+echo "=====================================================" > $REPORT
+while IFS= read -r line
+do
+        /opt/zimbra/bin/zmprov ra "$line@mydomian2.local"  "$line@mydomian.local" # >> $REPORT
+        if [ $? -eq 0 ]; then
+                echo "Account  $line chnage successfully" >> $REPORT
+                /opt/zimbra/bin/zmprov aaa "$line@mydomian.local" "$line@mydomian2.local"
+                /opt/zimbra/bin/zmprov modifyAccount "$line@mydomian.local" zimbraPrefFromAddress "$line@mydomian2.local"
+                i=$((i+1))
+        else
+                echo "Account> $line change Unsuccessfully" >> $REPORT
+                y=$((y+1))
+        fi
+        exit
+done <"$file"
+
+echo "---------------------------------------" >> $REPORT
+echo "Total number of file to be DELETED = `cat $file | wc -l `">> $REPORT
+echo "Sucessfull = $i" >> $REPORT
+echo "UnSucessfull = $y" >> $REPORT
+echo "===========================END=============================" >> $REPORT
